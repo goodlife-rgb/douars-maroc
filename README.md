@@ -2,10 +2,6 @@
 
 Application web interactive sous forme de tableur (style Google Sheets) répertoriant plus de **10 155 douars et communes du Maroc** avec toutes leurs subdivisions administratives (Provinces/Villes, الجماعات, الجماعات القروية, المشيخات, الدواوير).
 
-**Créé par :** Hamza  
-**Created by :** Hamza
-
-
 ---
 
 ### 🚀 Fonctionnalités :
