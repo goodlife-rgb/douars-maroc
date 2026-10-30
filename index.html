@@ -299,19 +299,6 @@
       text-align: center;
     }
 
-    .copy-actions-group {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .copy-bar-btn {
-      padding: 3px 8px;
-      font-size: 11.5px;
-      gap: 4px;
-      border-radius: 4px;
-    }
-
     .copy-toast {
       position: fixed;
       bottom: 45px;
@@ -870,29 +857,9 @@
   <!-- TOOLBAR -->
   <div class="formula-bar-container">
     <div class="cell-name-box" id="cellCoords">A1</div>
-    
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <div class="copy-actions-group">
-        <button class="btn copy-bar-btn" id="copyCellBtn" title="Copier la valeur de la cellule (ou double-cliquez dessus)">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          <span>Copier cellule</span>
-        </button>
-
-        <button class="btn copy-bar-btn" id="copyRowBtn" title="Copier toute la ligne (toutes les colonnes)">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 6h18M3 12h18M3 18h18"></path>
-          </svg>
-          <span>Copier ligne</span>
-        </button>
-      </div>
-
-      <button class="filter-reset-pill" id="resetAllFiltersBtn" title="Réinitialiser tous les filtres">
-        ✕ Effacer les filtres
-      </button>
-    </div>
+    <button class="filter-reset-pill" id="resetAllFiltersBtn" title="Réinitialiser tous les filtres">
+      ✕ Effacer les filtres
+    </button>
   </div>
 
   <div id="copyToast" class="copy-toast">
@@ -1350,29 +1317,6 @@
       if (!cell) return;
       const val = cell.getAttribute('data-val');
       copyText(val, val);
-    });
-
-    // Copy Cell Button in Formula bar
-    document.getElementById('copyCellBtn').addEventListener('click', () => {
-      if (selectedCell && selectedCell.val) {
-        copyText(selectedCell.val, selectedCell.val);
-      } else {
-        showCopyToast('Sélectionnez d\'abord une cellule à copier !');
-      }
-    });
-
-    // Copy Full Row Button in Formula bar
-    document.getElementById('copyRowBtn').addEventListener('click', () => {
-      if (selectedCell && selectedCell.r) {
-        const rowIdx = selectedCell.r - 1;
-        if (rowIdx >= 0 && rowIdx < filteredIndices.length) {
-          const rowData = rawData[filteredIndices[rowIdx]];
-          const rowText = rowData.join('\t');
-          copyText(rowText, `${rowData[0]} - ${rowData[4]}`);
-        }
-      } else {
-        showCopyToast('Sélectionnez d\'abord une ligne à copier !');
-      }
     });
 
     // Keyboard shortcut Ctrl+C
