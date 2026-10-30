@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOUARS MAROC - Google Sheets Database</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230F9D58'><path d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H5v-2h9v2zm0-4H5v-2h9v2zm0-4H5V7h9v2zm5 8h-3v-2h3v2zm0-4h-3v-2h3v2zm0-4h-3V7h3v2z'/></svg>">
+  <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-tertiary: #edf2f7;
+      --bg-toolbar: #f1f3f4;
+      --border-color: #e0e0e0;
+      --border-dark: #c0c0c0;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --text-muted: #80868b;
+      --sheet-green: #0f9d58;
+      --sheet-green-hover: #0b8043;
+      --selection-border: #1a73e8;
+      --selection-bg: rgba(26, 115, 232, 0.08);
+      --highlight-bg: #fef08a;
+      --highlight-text: #111827;
+      --row-hover: #f1f5f9;
+      --header-bg: #f8f9fa;
+      --header-hover: #eaeef2;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #1e1f20;
+      --bg-secondary: #282a2c;
+      --bg-tertiary: #303134;
+      --bg-toolbar: #292a2d;
+      --border-color: #3c4043;
+      --border-dark: #5f6368;
+      --text-primary: #e8eaed;
+      --text-secondary: #9aa0a6;
+      --text-muted: #80868b;
+      --sheet-green: #34a853;
+      --sheet-green-hover: #2b8a44;
+      --selection-border: #8ab4f8;
+      --selection-bg: rgba(138, 180, 248, 0.12);
+      --highlight-bg: #facc15;
+      --highlight-text: #000000;
+      --row-hover: #2d2f31;
+      --header-bg: #282a2c;
+      --header-hover: #333538;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-size: 13px;
+      user-select: none;
+    }
+
+    /* TOP BAR - Google Sheets style */
+    .top-bar {
+      background-color: var(--bg-primary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 12px;
+      gap: 12px;
+    }
+
+    .top-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 260px;
+    }
+
+    .sheets-icon {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+
+    .doc-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .doc-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .doc-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .doc-badge {
+      font-size: 10px;
+      background: var(--sheet-green);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .doc-status {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* GLOBAL SEARCH - PROMINENT */
+    .search-container {
+      flex: 1;
+      max-width: 580px;
+      position: relative;
+    }
+
+    .search-input-box {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 6px 12px;
+      transition: all 0.2s ease;
+    }
+
+    .search-input-box:focus-within {
+      background: var(--bg-primary);
+      border-color: var(--selection-border);
+      box-shadow: 0 0 0 2px var(--selection-bg);
+    }
+
+    .search-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 13px;
+    }
+
+    .search-clear-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      border-radius: 50%;
+    }
+
+    .search-clear-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .search-count {
+      font-size: 11px;
+      color: var(--sheet-green);
+      font-weight: 600;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+
+    /* TOP RIGHT ACTIONS */
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: var(--header-hover);
+      border-color: var(--border-dark);
+    }
+
+    .btn-green {
+      background: var(--sheet-green);
+      color: #ffffff;
+      border-color: var(--sheet-green);
+    }
+
+    .btn-green:hover {
+      background: var(--sheet-green-hover);
+      border-color: var(--sheet-green-hover);
+      color: #ffffff;
+    }
+
+    .btn-icon {
+      padding: 6px 8px;
+    }
+
+    /* FORMULA BAR */
+    .formula-bar-container {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      padding: 4px 12px;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .cell-name-box {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 2px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-secondary);
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .fx-symbol {
+      font-family: "Times New Roman", serif;
+      font-style: italic;
+      font-weight: bold;
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 0 4px;
+    }
+
+    .formula-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .filter-reset-pill {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid #fca5a5;
+      cursor: pointer;
+    }
+
+    [data-theme="dark"] .filter-reset-pill {
+      background: #451a1a;
+      color: #fca5a5;
+      border-color: #7f1d1d;
+    }
+
+    /* SPREADSHEET WRAPPER */
+    .spreadsheet-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: auto;
+      background: var(--bg-primary);
+    }
+
+    table.sheets-table {
+      border-collapse: collapse;
+      table-layout: fixed;
+      width: 100%;
+      min-width: 900px;
+    }
+
+    /* ROW & COLUMN HEADERS */
+    th.corner-cell {
+      position: sticky;
+      top: 0;
+      left: 0;
+      z-index: 30;
+      width: 50px;
+      background: var(--header-bg);
+      border-right: 1px solid var(--border-dark);
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    th.col-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--header-bg);
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-dark);
+      padding: 0;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-secondary);
+      height: 32px;
+      user-select: none;
+    }
+
+    .col-header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+      padding: 4px 8px;
+      gap: 4px;
+    }
+
+    .col-header-info {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .col-letter {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .col-title {
+      font-size: 12px;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .col-filter-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .col-filter-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+
+    .col-filter-btn.active {
+      background: var(--sheet-green);
+      color: #ffffff;
+      border-color: var(--sheet-green);
+    }
+
+    /* ROW INDEX CELL */
+    td.row-idx {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      width: 50px;
+      background: var(--header-bg);
+      border-right: 1px solid var(--border-dark);
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    /* DATA CELLS */
+    td.sheet-cell {
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 6px 10px;
+      font-size: 12.5px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+    }
+
+    td.sheet-cell.ar {
+      direction: rtl;
+      text-align: right;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    }
+
+    tr:hover td.sheet-cell {
+      background-color: var(--row-hover);
+    }
+
+    tr:hover td.row-idx {
+      background-color: var(--header-hover);
+      color: var(--text-primary);
+    }
+
+    td.sheet-cell.selected {
+      outline: 2px solid var(--selection-border);
+      outline-offset: -2px;
+      background-color: var(--selection-bg);
+      z-index: 5;
+    }
+
+    /* YELLOW HIGHLIGHT REQUIREMENT:
+       "W YKON KAYN WHED SEARCH GLOBAL AY HJ DARTHA F RECHRECH KTAL3 AKWTLWEN BLON SFER" */
+    mark.hl {
+      background-color: var(--highlight-bg);
+      color: var(--highlight-text);
+      font-weight: 700;
+      padding: 1px 3px;
+      border-radius: 3px;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* COLUMN FILTER DROPDOWN */
+    .filter-menu {
+      position: absolute;
+      top: 36px;
+      right: 4px;
+      width: 250px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      font-size: 12px;
+    }
+
+    .filter-menu.open {
+      display: flex;
+    }
+
+    .filter-menu-header {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--bg-secondary);
+    }
+
+    .filter-sort-btns {
+      display: flex;
+      gap: 4px;
+    }
+
+    .filter-sort-btn {
+      flex: 1;
+      padding: 4px;
+      font-size: 11px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .filter-sort-btn:hover {
+      background: var(--header-hover);
+    }
+
+    .filter-search-input {
+      width: 100%;
+      padding: 5px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      outline: none;
+      font-size: 12px;
+    }
+
+    .filter-menu-actions {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 10px;
+      font-size: 11px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .filter-link-btn {
+      color: var(--selection-border);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .filter-link-btn:hover {
+      text-decoration: underline;
+    }
+
+    .filter-list {
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .filter-item:hover {
+      background: var(--bg-secondary);
+    }
+
+    .filter-item input[type="checkbox"] {
+      cursor: pointer;
+      accent-color: var(--sheet-green);
+    }
+
+    .filter-item-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11.5px;
+    }
+
+    .filter-item-count {
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    .filter-menu-footer {
+      padding: 8px 10px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      background: var(--bg-secondary);
+    }
+
+    /* BOTTOM BAR - Google Sheets style */
+    .bottom-bar {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 12px;
+      gap: 12px;
+      font-size: 12px;
+      z-index: 25;
+    }
+
+    .sheet-tabs {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .sheet-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: var(--bg-primary);
+      border-top: 2px solid var(--sheet-green);
+      font-weight: 600;
+      color: var(--text-primary);
+      border-radius: 4px 4px 0 0;
+      font-size: 12px;
+    }
+
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-btn {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      background: var(--header-hover);
+    }
+
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .page-info {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .page-size-select {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* EMPTY / LOADING STATE */
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="top-left">
+      <svg class="sheets-icon" viewBox="0 0 24 24" fill="#0F9D58">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H5v-2h9v2zm0-4H5v-2h9v2zm0-4H5V7h9v2zm5 8h-3v-2h3v2zm0-4h-3v-2h3v2zm0-4h-3V7h3v2z"/>
+      </svg>
+      <div class="doc-info">
+        <div class="doc-title-row">
+          <span class="doc-title">DOUARS & COMMUNES DU MAROC</span>
+          <span class="doc-badge">LIVE DATABASE</span>
+        </div>
+        <span class="doc-status" id="docStatus">10,155 douars enregistrés • Prêt</span>
+      </div>
+    </div>
+
+    <!-- GLOBAL SEARCH (YELLOW HIGHLIGHT) -->
+    <div class="search-container">
+      <div class="search-input-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          id="globalSearch" 
+          class="search-input" 
+          placeholder="Recherche globale (nom de douar, jama3a, province... / ابحث عن أي دوار أو جماعة)"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <span id="searchCount" class="search-count"></span>
+        <button id="clearSearchBtn" class="search-clear-btn" title="Effacer la recherche">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="top-actions">
+      <button class="btn btn-green" id="exportBtn" title="Télécharger les données filtrées en CSV">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Exporter CSV</span>
+      </button>
+
+      <button class="btn btn-icon" id="themeToggleBtn" title="Basculer Mode Sombre / Clair">
+        <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- FORMULA BAR -->
+  <div class="formula-bar-container">
+    <div class="cell-name-box" id="cellCoords">A1</div>
+    <div class="fx-symbol">fx</div>
+    <input type="text" class="formula-input" id="formulaInput" readonly value="=COUNTIF(Douars) → 10,155 douars répertoriés">
+    <button class="filter-reset-pill" id="resetAllFiltersBtn" title="Réinitialiser tous les filtres">
+      ✕ Effacer les filtres
+    </button>
+  </div>
+
+  <!-- SPREADSHEET WRAPPER -->
+  <main class="spreadsheet-wrapper" id="sheetContainer">
+    <table class="sheets-table">
+      <colgroup>
+        <col style="width: 50px;">
+        <col style="width: 20%;">
+        <col style="width: 20%;">
+        <col style="width: 20%;">
+        <col style="width: 20%;">
+        <col style="width: 20%;">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="corner-cell"></th>
+          
+          <!-- COL A: CITY -->
+          <th class="col-header" data-col="0">
+            <div class="col-header-content">
+              <div class="col-header-info">
+                <span class="col-letter">A</span>
+                <span class="col-title">CITY / PROVINCE</span>
+              </div>
+              <button class="col-filter-btn" data-col="0" title="Filtrer la colonne">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 4h18l-7 8v8l-4-2v-6z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="filter-menu" id="filterMenu-0"></div>
+          </th>
+
+          <!-- COL B: JAMA3A -->
+          <th class="col-header" data-col="1">
+            <div class="col-header-content">
+              <div class="col-header-info">
+                <span class="col-letter">B</span>
+                <span class="col-title">JAMA3A (الجماعة)</span>
+              </div>
+              <button class="col-filter-btn" data-col="1" title="Filtrer la colonne">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 4h18l-7 8v8l-4-2v-6z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="filter-menu" id="filterMenu-1"></div>
+          </th>
+
+          <!-- COL C: JAMA3A_QARAWIYA -->
+          <th class="col-header" data-col="2">
+            <div class="col-header-content">
+              <div class="col-header-info">
+                <span class="col-letter">C</span>
+                <span class="col-title">JAMA3A QARAWIYA (الجماعة القروية)</span>
+              </div>
+              <button class="col-filter-btn" data-col="2" title="Filtrer la colonne">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 4h18l-7 8v8l-4-2v-6z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="filter-menu" id="filterMenu-2"></div>
+          </th>
+
+          <!-- COL D: MACHYAKHA -->
+          <th class="col-header" data-col="3">
+            <div class="col-header-content">
+              <div class="col-header-info">
+                <span class="col-letter">D</span>
+                <span class="col-title">MACHYAKHA (المشيخة)</span>
+              </div>
+              <button class="col-filter-btn" data-col="3" title="Filtrer la colonne">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 4h18l-7 8v8l-4-2v-6z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="filter-menu" id="filterMenu-3"></div>
+          </th>
+
+          <!-- COL E: DOUAR -->
+          <th class="col-header" data-col="4">
+            <div class="col-header-content">
+              <div class="col-header-info">
+                <span class="col-letter">E</span>
+                <span class="col-title">DOUAR (الدوار)</span>
+              </div>
+              <button class="col-filter-btn" data-col="4" title="Filtrer la colonne">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 4h18l-7 8v8l-4-2v-6z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="filter-menu" id="filterMenu-4"></div>
+          </th>
+        </tr>
+      </thead>
+      <tbody id="sheetBody">
+        <!-- Rows rendered by JavaScript -->
+      </tbody>
+    </table>
+  </main>
+
+  <!-- BOTTOM BAR -->
+  <footer class="bottom-bar">
+    <div class="sheet-tabs">
+      <div class="sheet-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#0F9D58">
+          <path d="M3 3h18v18H3V3zm2 2v4h14V5H5zm0 6v4h14v-4H5zm0 6v2h14v-2H5z"/>
+        </svg>
+        <span>Douars Maroc 2026</span>
+      </div>
+    </div>
+
+    <!-- PAGINATION & STATS -->
+    <div class="pagination-bar">
+      <span class="page-info" id="rowsSummary">1-50 de 10,155</span>
+      <select class="page-size-select" id="pageSizeSelect">
+        <option value="50">50 lignes</option>
+        <option value="100" selected>100 lignes</option>
+        <option value="250">250 lignes</option>
+        <option value="500">500 lignes</option>
+        <option value="1000">1000 lignes</option>
+        <option value="all">Tout afficher</option>
+      </select>
+      <button class="page-btn" id="firstPageBtn" title="Première page">«</button>
+      <button class="page-btn" id="prevPageBtn" title="Page précédente">‹</button>
+      <span class="page-info" id="pageNumber">Page 1 / 102</span>
+      <button class="page-btn" id="nextPageBtn" title="Page suivante">›</button>
+      <button class="page-btn" id="lastPageBtn" title="Dernière page">»</button>
+    </div>
+  </footer>
+
+  <!-- DATA SCRIPT -->
+  <script src="data.js"></script>
+
+  <!-- APP LOGIC -->
+  <script>
+    // State
+    const rawData = window.DOUAR_DATA || [];
+    let filteredIndices = [];
+    let activeSort = { col: null, dir: 1 }; // 1: asc, -1: desc
+    let columnFilters = { 0: null, 1: null, 2: null, 3: null, 4: null };
+    let globalQuery = '';
+    let currentPage = 1;
+    let pageSize = 100;
+    let selectedCell = null;
+    let currentOpenFilterCol = null;
+
+    // Elements
+    const sheetBody = document.getElementById('sheetBody');
+    const globalSearchInput = document.getElementById('globalSearch');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const searchCountEl = document.getElementById('searchCount');
+    const rowsSummaryEl = document.getElementById('rowsSummary');
+    const pageNumberEl = document.getElementById('pageNumber');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const firstPageBtn = document.getElementById('firstPageBtn');
+    const lastPageBtn = document.getElementById('lastPageBtn');
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
+    const docStatusEl = document.getElementById('docStatus');
+    const cellCoordsEl = document.getElementById('cellCoords');
+    const formulaInput = document.getElementById('formulaInput');
+    const resetAllFiltersBtn = document.getElementById('resetAllFiltersBtn');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const exportBtn = document.getElementById('exportBtn');
+
+    // Arabic normalization helper for search matching
+    function normalizeArabic(str) {
+      if (!str) return '';
+      return str
+        .toLowerCase()
+        .replace(/[أإآا]/g, 'ا')
+        .replace(/[هة]/g, 'ه')
+        .replace(/[يى]/g, 'ي')
+        .replace(/[\u064B-\u065F]/g, ''); // Remove tashkeel/harakat
+    }
+
+    // Escape regex characters
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Build regex for highlight supporting Arabic variants
+    function buildHighlightRegex(term) {
+      if (!term) return null;
+      const clean = term.trim();
+      if (!clean) return null;
+      let pattern = '';
+      for (const char of clean) {
+        if (/[أإآا]/.test(char)) {
+          pattern += '[أإآا]';
+        } else if (/[هة]/.test(char)) {
+          pattern += '[هة]';
+        } else if (/[يى]/.test(char)) {
+          pattern += '[يى]';
+        } else {
+          pattern += escapeRegExp(char);
+        }
+      }
+      return new RegExp(`(${pattern})`, 'gi');
+    }
+
+    // Highlight matching text with <mark class="hl">
+    function highlightMatch(text, regex) {
+      if (!text) return '-';
+      if (!regex) return escapeHtml(text);
+      const escaped = escapeHtml(text);
+      return escaped.replace(regex, '<mark class="hl">$1</mark>');
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Filter and Sort Engine
+    function applyFilters() {
+      const q = globalQuery.trim();
+      const normQ = normalizeArabic(q);
+      const hasGlobal = normQ.length > 0;
+      
+      const activeColFilters = Object.entries(columnFilters).filter(([_, set]) => set !== null);
+      const hasColFilters = activeColFilters.length > 0;
+
+      // Update reset filters pill
+      if (hasGlobal || hasColFilters) {
+        resetAllFiltersBtn.style.display = 'inline-flex';
+      } else {
+        resetAllFiltersBtn.style.display = 'none';
+      }
+
+      // Filter
+      const matched = [];
+      const total = rawData.length;
+
+      for (let i = 0; i < total; i++) {
+        const row = rawData[i];
+
+        // Column specific filter checks
+        let passCols = true;
+        for (const [colIdxStr, allowedSet] of activeColFilters) {
+          const colIdx = Number(colIdxStr);
+          if (!allowedSet.has(row[colIdx])) {
+            passCols = false;
+            break;
+          }
+        }
+        if (!passCols) continue;
+
+        // Global search check
+        if (hasGlobal) {
+          const fullNorm = normalizeArabic(row[0] + ' ' + row[1] + ' ' + row[2] + ' ' + row[3] + ' ' + row[4]);
+          if (!fullNorm.includes(normQ)) {
+            continue;
+          }
+        }
+
+        matched.push(i);
+      }
+
+      // Sort
+      if (activeSort.col !== null) {
+        const c = activeSort.col;
+        const dir = activeSort.dir;
+        matched.sort((a, b) => {
+          const valA = rawData[a][c] || '';
+          const valB = rawData[b][c] || '';
+          return valA.localeCompare(valB, 'ar-MA', { sensitivity: 'base' }) * dir;
+        });
+      }
+
+      filteredIndices = matched;
+      currentPage = 1;
+
+      // Update search indicators
+      if (hasGlobal) {
+        searchCountEl.textContent = `${filteredIndices.length} trouvé${filteredIndices.length > 1 ? 's' : ''}`;
+        clearSearchBtn.style.display = 'inline-flex';
+      } else {
+        searchCountEl.textContent = '';
+        clearSearchBtn.style.display = 'none';
+      }
+
+      formulaInput.value = `=COUNTIFS(Filtres) → ${filteredIndices.length.toLocaleString()} douars trouvés`;
+      docStatusEl.textContent = `${filteredIndices.length.toLocaleString()} sur ${rawData.length.toLocaleString()} affichés`;
+
+      renderTable();
+      updateFilterButtonsState();
+    }
+
+    // Render Table Page
+    function renderTable() {
+      const total = filteredIndices.length;
+      const size = pageSize === 'all' ? total : Number(pageSize);
+      const totalPages = Math.max(1, Math.ceil(total / size));
+
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIdx = (currentPage - 1) * size;
+      const endIdx = Math.min(startIdx + size, total);
+
+      // Pagination UI
+      pageNumberEl.textContent = `Page ${currentPage} / ${totalPages}`;
+      rowsSummaryEl.textContent = total === 0 ? '0-0 de 0' : `${(startIdx + 1).toLocaleString()}-${endIdx.toLocaleString()} de ${total.toLocaleString()}`;
+      firstPageBtn.disabled = currentPage <= 1;
+      prevPageBtn.disabled = currentPage <= 1;
+      nextPageBtn.disabled = currentPage >= totalPages;
+      lastPageBtn.disabled = currentPage >= totalPages;
+
+      if (total === 0) {
+        sheetBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="empty-state">
+              Aucun résultat trouvé pour votre recherche.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      const hlRegex = buildHighlightRegex(globalQuery);
+      const colLetters = ['A', 'B', 'C', 'D', 'E'];
+      let html = '';
+
+      for (let p = startIdx; p < endIdx; p++) {
+        const originalIndex = filteredIndices[p];
+        const row = rawData[originalIndex];
+        const rowNumber = p + 1;
+
+        html += `<tr>`;
+        html += `<td class="row-idx">${rowNumber}</td>`;
+        
+        // 5 columns
+        for (let c = 0; c < 5; c++) {
+          const val = row[c];
+          const isArabic = c >= 1; // JAMA3A, JAMA3A_QARAWIYA, MACHYAKHA, DOUAR are Arabic
+          const isSelected = selectedCell && selectedCell.r === rowNumber && selectedCell.c === c;
+          const cellCoord = `${colLetters[c]}${rowNumber}`;
+
+          html += `
+            <td class="sheet-cell ${isArabic ? 'ar' : ''} ${isSelected ? 'selected' : ''}" 
+                data-row="${rowNumber}" 
+                data-col="${c}" 
+                data-coord="${cellCoord}"
+                data-val="${escapeHtml(val)}"
+                title="${escapeHtml(val)}"
+            >
+              ${highlightMatch(val, hlRegex)}
+            </td>
+          `;
+        }
+
+        html += `</tr>`;
+      }
+
+      sheetBody.innerHTML = html;
+    }
+
+    // Cell click handler
+    sheetBody.addEventListener('click', (e) => {
+      const cell = e.target.closest('td.sheet-cell');
+      if (!cell) return;
+
+      document.querySelectorAll('td.sheet-cell.selected').forEach(el => el.classList.remove('selected'));
+      cell.classList.add('selected');
+
+      const coord = cell.getAttribute('data-coord');
+      const val = cell.getAttribute('data-val');
+      const r = Number(cell.getAttribute('data-row'));
+      const c = Number(cell.getAttribute('data-col'));
+
+      selectedCell = { r, c, coord, val };
+      cellCoordsEl.textContent = coord;
+      formulaInput.value = val;
+    });
+
+    // Global Search events
+    let searchTimeout = null;
+    globalSearchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        globalQuery = e.target.value;
+        applyFilters();
+      }, 100);
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+      globalSearchInput.value = '';
+      globalQuery = '';
+      applyFilters();
+      globalSearchInput.focus();
+    });
+
+    // Reset all filters button
+    resetAllFiltersBtn.addEventListener('click', () => {
+      globalQuery = '';
+      globalSearchInput.value = '';
+      columnFilters = { 0: null, 1: null, 2: null, 3: null, 4: null };
+      activeSort = { col: null, dir: 1 };
+      applyFilters();
+    });
+
+    // Pagination events
+    firstPageBtn.addEventListener('click', () => { currentPage = 1; renderTable(); sheetContainer.scrollTop = 0; });
+    prevPageBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(); sheetContainer.scrollTop = 0; } });
+    nextPageBtn.addEventListener('click', () => { currentPage++; renderTable(); sheetContainer.scrollTop = 0; });
+    lastPageBtn.addEventListener('click', () => { 
+      const size = pageSize === 'all' ? filteredIndices.length : Number(pageSize);
+      currentPage = Math.ceil(filteredIndices.length / size);
+      renderTable();
+      sheetContainer.scrollTop = 0;
+    });
+    pageSizeSelect.addEventListener('change', (e) => {
+      pageSize = e.target.value;
+      currentPage = 1;
+      renderTable();
+    });
+
+    // Column Filters & Dropdowns
+    function updateFilterButtonsState() {
+      for (let c = 0; c < 5; c++) {
+        const btn = document.querySelector(`.col-filter-btn[data-col="${c}"]`);
+        if (btn) {
+          if (columnFilters[c] !== null) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
+      }
+    }
+
+    document.querySelectorAll('.col-filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const colIdx = Number(btn.getAttribute('data-col'));
+        toggleFilterMenu(colIdx);
+      });
+    });
+
+    function toggleFilterMenu(colIdx) {
+      const menu = document.getElementById(`filterMenu-${colIdx}`);
+      const isOpen = menu.classList.contains('open');
+
+      // Close all menus
+      document.querySelectorAll('.filter-menu').forEach(m => {
+        m.classList.remove('open');
+        m.innerHTML = '';
+      });
+
+      if (isOpen) {
+        currentOpenFilterCol = null;
+        return;
+      }
+
+      currentOpenFilterCol = colIdx;
+      buildFilterMenu(colIdx, menu);
+      menu.classList.add('open');
+    }
+
+    function buildFilterMenu(colIdx, menu) {
+      // Gather unique values and counts for this column
+      const counts = new Map();
+      for (let i = 0; i < rawData.length; i++) {
+        const val = rawData[i][colIdx];
+        counts.set(val, (counts.get(val) || 0) + 1);
+      }
+
+      const sortedVals = Array.from(counts.keys()).sort((a, b) => {
+        return a.localeCompare(b, 'ar-MA', { sensitivity: 'base' });
+      });
+
+      const currentSelected = columnFilters[colIdx] ? new Set(columnFilters[colIdx]) : new Set(sortedVals);
+
+      menu.innerHTML = `
+        <div class="filter-menu-header">
+          <div class="filter-sort-btns">
+            <button class="filter-sort-btn" id="sortAscBtn">Sort A → Z</button>
+            <button class="filter-sort-btn" id="sortDescBtn">Sort Z → A</button>
+          </div>
+          <input type="text" class="filter-search-input" id="colFilterSearch" placeholder="Rechercher dans les valeurs...">
+        </div>
+        <div class="filter-menu-actions">
+          <button class="filter-link-btn" id="selectAllCol">Tout sélectionner</button>
+          <button class="filter-link-btn" id="clearAllCol">Effacer</button>
+        </div>
+        <div class="filter-list" id="filterListItems"></div>
+        <div class="filter-menu-footer">
+          <button class="btn" id="cancelFilterBtn">Annuler</button>
+          <button class="btn btn-green" id="applyFilterBtn">Appliquer</button>
+        </div>
+      `;
+
+      const listContainer = menu.querySelector('#filterListItems');
+      const searchInput = menu.querySelector('#colFilterSearch');
+
+      function renderItems(filterQuery = '') {
+        const norm = normalizeArabic(filterQuery);
+        let itemsHtml = '';
+        sortedVals.forEach((val) => {
+          if (norm && !normalizeArabic(val).includes(norm)) return;
+          const isChecked = currentSelected.has(val);
+          itemsHtml += `
+            <label class="filter-item">
+              <input type="checkbox" value="${escapeHtml(val)}" ${isChecked ? 'checked' : ''}>
+              <span class="filter-item-text" title="${escapeHtml(val)}">${escapeHtml(val)}</span>
+              <span class="filter-item-count">(${counts.get(val)})</span>
+            </label>
+          `;
+        });
+        listContainer.innerHTML = itemsHtml || '<div style="padding: 10px; color: var(--text-muted); text-align: center;">Aucun résultat</div>';
+      }
+
+      renderItems();
+
+      searchInput.addEventListener('input', (e) => {
+        renderItems(e.target.value);
+      });
+
+      listContainer.addEventListener('change', (e) => {
+        if (e.target.type === 'checkbox') {
+          const val = e.target.value;
+          if (e.target.checked) {
+            currentSelected.add(val);
+          } else {
+            currentSelected.delete(val);
+          }
+        }
+      });
+
+      menu.querySelector('#selectAllCol').addEventListener('click', () => {
+        sortedVals.forEach(v => currentSelected.add(v));
+        listContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+      });
+
+      menu.querySelector('#clearAllCol').addEventListener('click', () => {
+        currentSelected.clear();
+        listContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+      });
+
+      menu.querySelector('#sortAscBtn').addEventListener('click', () => {
+        activeSort = { col: colIdx, dir: 1 };
+        applyFilters();
+        menu.classList.remove('open');
+      });
+
+      menu.querySelector('#sortDescBtn').addEventListener('click', () => {
+        activeSort = { col: colIdx, dir: -1 };
+        applyFilters();
+        menu.classList.remove('open');
+      });
+
+      menu.querySelector('#cancelFilterBtn').addEventListener('click', () => {
+        menu.classList.remove('open');
+      });
+
+      menu.querySelector('#applyFilterBtn').addEventListener('click', () => {
+        if (currentSelected.size === sortedVals.length) {
+          columnFilters[colIdx] = null;
+        } else {
+          columnFilters[colIdx] = new Set(currentSelected);
+        }
+        applyFilters();
+        menu.classList.remove('open');
+      });
+    }
+
+    // Close filter dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.filter-menu') && !e.target.closest('.col-filter-btn')) {
+        document.querySelectorAll('.filter-menu').forEach(m => {
+          m.classList.remove('open');
+        });
+        currentOpenFilterCol = null;
+      }
+    });
+
+    // Dark Mode Toggle
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    setTheme(currentTheme);
+
+    themeToggleBtn.addEventListener('click', () => {
+      const active = document.documentElement.getAttribute('data-theme');
+      const next = active === 'dark' ? 'light' : 'dark';
+      setTheme(next);
+    });
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      const icon = document.getElementById('themeIcon');
+      if (theme === 'dark') {
+        icon.innerHTML = `
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        `;
+      } else {
+        icon.innerHTML = `
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        `;
+      }
+    }
+
+    // Export CSV
+    exportBtn.addEventListener('click', () => {
+      const headers = ['CITY', 'JAMA3A', 'JAMA3A_QARAWIYA', 'MACHYAKHA', 'DOUAR'];
+      let csvContent = '\uFEFF' + headers.join(',') + '\r\n';
+
+      for (let i = 0; i < filteredIndices.length; i++) {
+        const row = rawData[filteredIndices[i]];
+        const escaped = row.map(val => `"${String(val || '').replace(/"/g, '""')}"`);
+        csvContent += escaped.join(',') + '\r\n';
+      }
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `douars_maroc_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Initial load
+    applyFilters();
+  </script>
+</body>
+</html>
