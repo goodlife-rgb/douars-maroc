@@ -275,12 +275,13 @@
       padding: 6px 8px;
     }
 
-    /* FORMULA BAR */
+    /* TOOLBAR */
     .formula-bar-container {
       background: var(--bg-primary);
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
+      justify-content: space-between;
       padding: 4px 12px;
       gap: 8px;
       font-size: 12px;
@@ -296,30 +297,6 @@
       background: var(--bg-secondary);
       min-width: 50px;
       text-align: center;
-    }
-
-    .fx-symbol {
-      font-family: "Times New Roman", serif;
-      font-style: italic;
-      font-weight: bold;
-      color: var(--text-muted);
-      font-size: 14px;
-      padding: 0 4px;
-    }
-
-    .formula-input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      outline: none;
-      color: var(--text-secondary);
-      font-family: var(--font-arabic), var(--font-mono);
-      font-size: 12.5px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      user-select: text;
-      cursor: text;
     }
 
     .copy-actions-group {
@@ -890,32 +867,32 @@
     </div>
   </header>
 
-  <!-- FORMULA BAR -->
+  <!-- TOOLBAR -->
   <div class="formula-bar-container">
     <div class="cell-name-box" id="cellCoords">A1</div>
-    <div class="fx-symbol">fx</div>
-    <input type="text" class="formula-input" id="formulaInput" readonly value="=COUNTIF(Douars) → 10,155 douars répertoriés">
     
-    <div class="copy-actions-group">
-      <button class="btn copy-bar-btn" id="copyCellBtn" title="Copier la valeur de la cellule (ou double-cliquez dessus)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-        </svg>
-        <span>Copier cellule</span>
-      </button>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="copy-actions-group">
+        <button class="btn copy-bar-btn" id="copyCellBtn" title="Copier la valeur de la cellule (ou double-cliquez dessus)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>Copier cellule</span>
+        </button>
 
-      <button class="btn copy-bar-btn" id="copyRowBtn" title="Copier toute la ligne (toutes les colonnes)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 6h18M3 12h18M3 18h18"></path>
-        </svg>
-        <span>Copier ligne</span>
+        <button class="btn copy-bar-btn" id="copyRowBtn" title="Copier toute la ligne (toutes les colonnes)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M3 12h18M3 18h18"></path>
+          </svg>
+          <span>Copier ligne</span>
+        </button>
+      </div>
+
+      <button class="filter-reset-pill" id="resetAllFiltersBtn" title="Réinitialiser tous les filtres">
+        ✕ Effacer les filtres
       </button>
     </div>
-
-    <button class="filter-reset-pill" id="resetAllFiltersBtn" title="Réinitialiser tous les filtres">
-      ✕ Effacer les filtres
-    </button>
   </div>
 
   <div id="copyToast" class="copy-toast">
@@ -1090,7 +1067,6 @@
     const pageSizeSelect = document.getElementById('pageSizeSelect');
     const docStatusEl = document.getElementById('docStatus');
     const cellCoordsEl = document.getElementById('cellCoords');
-    const formulaInput = document.getElementById('formulaInput');
     const resetAllFiltersBtn = document.getElementById('resetAllFiltersBtn');
     const themeToggleBtn = document.getElementById('themeToggleBtn');
     const exportBtn = document.getElementById('exportBtn');
@@ -1217,7 +1193,6 @@
         clearSearchBtn.style.display = 'none';
       }
 
-      formulaInput.value = `=COUNTIFS(Filtres) → ${filteredIndices.length.toLocaleString()} douars trouvés`;
       docStatusEl.textContent = `${filteredIndices.length.toLocaleString()} sur ${rawData.length.toLocaleString()} affichés`;
 
       renderTable();
@@ -1367,7 +1342,6 @@
 
       selectedCell = { r, c, coord, val };
       cellCoordsEl.textContent = coord;
-      formulaInput.value = val;
     });
 
     // Double-click to copy cell value
