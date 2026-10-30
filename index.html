@@ -65,7 +65,6 @@
       flex-direction: column;
       overflow: hidden;
       font-size: 13px;
-      user-select: none;
     }
 
     /* TOP BAR - Google Sheets style */
@@ -315,6 +314,54 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
+      user-select: text;
+      cursor: text;
+    }
+
+    .copy-actions-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .copy-bar-btn {
+      padding: 3px 8px;
+      font-size: 11.5px;
+      gap: 4px;
+      border-radius: 4px;
+    }
+
+    .copy-toast {
+      position: fixed;
+      bottom: 45px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      background: #1e293b;
+      color: #ffffff;
+      padding: 8px 18px;
+      border-radius: 24px;
+      font-size: 12px;
+      font-weight: 500;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    [data-theme="dark"] .copy-toast {
+      background: #0f172a;
+      color: #f8fafc;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .copy-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     .filter-reset-pill {
@@ -463,6 +510,45 @@
       overflow: hidden;
       text-overflow: ellipsis;
       position: relative;
+      user-select: text;
+      -webkit-user-select: text;
+      cursor: cell;
+    }
+
+    /* Subtle copy button inside cell on hover */
+    .cell-copy-btn {
+      position: absolute;
+      top: 50%;
+      right: 4px;
+      transform: translateY(-50%);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      width: 22px;
+      height: 22px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      z-index: 6;
+      transition: all 0.15s;
+    }
+
+    td.sheet-cell.ar .cell-copy-btn {
+      right: auto;
+      left: 4px;
+    }
+
+    td.sheet-cell:hover .cell-copy-btn {
+      display: flex;
+    }
+
+    .cell-copy-btn:hover {
+      background: var(--sheet-green);
+      color: #ffffff;
+      border-color: var(--sheet-green);
     }
 
     td.sheet-cell.ar {
@@ -795,9 +881,34 @@
     <div class="cell-name-box" id="cellCoords">A1</div>
     <div class="fx-symbol">fx</div>
     <input type="text" class="formula-input" id="formulaInput" readonly value="=COUNTIF(Douars) → 10,155 douars répertoriés">
+    
+    <div class="copy-actions-group">
+      <button class="btn copy-bar-btn" id="copyCellBtn" title="Copier la valeur de la cellule (ou double-cliquez dessus)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <span>Copier cellule</span>
+      </button>
+
+      <button class="btn copy-bar-btn" id="copyRowBtn" title="Copier toute la ligne (toutes les colonnes)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 6h18M3 12h18M3 18h18"></path>
+        </svg>
+        <span>Copier ligne</span>
+      </button>
+    </div>
+
     <button class="filter-reset-pill" id="resetAllFiltersBtn" title="Réinitialiser tous les filtres">
       ✕ Effacer les filtres
     </button>
+  </div>
+
+  <div id="copyToast" class="copy-toast">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="3">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span id="copyToastMsg">Texte copié !</span>
   </div>
 
   <!-- SPREADSHEET WRAPPER -->
@@ -1155,8 +1266,14 @@
                 data-col="${c}" 
                 data-coord="${cellCoord}"
                 data-val="${escapeHtml(val)}"
-                title="${escapeHtml(val)}"
+                title="Double-cliquez pour copier : ${escapeHtml(val)}"
             >
+              <button class="cell-copy-btn" title="Copier ce texte" data-copy="${escapeHtml(val)}">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
               ${highlightMatch(val, hlRegex)}
             </td>
           `;
@@ -1168,8 +1285,61 @@
       sheetBody.innerHTML = html;
     }
 
+    // Toast notification for copy
+    let toastTimeout = null;
+    function showCopyToast(msg) {
+      const toast = document.getElementById('copyToast');
+      const toastMsg = document.getElementById('copyToastMsg');
+      toastMsg.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    // Universal copy function
+    function copyText(text, label = '') {
+      if (!text && text !== '0') return;
+      const cleanText = String(text);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cleanText).then(() => {
+          showCopyToast(label ? `Copié : "${label}"` : `Copié dans le presse-papier !`);
+        }).catch(() => {
+          fallbackCopy(cleanText, label);
+        });
+      } else {
+        fallbackCopy(cleanText, label);
+      }
+    }
+
+    function fallbackCopy(text, label) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showCopyToast(label ? `Copié : "${label}"` : `Copié !`);
+      } catch (e) {
+        prompt('Copiez ce texte manuellement :', text);
+      }
+      document.body.removeChild(ta);
+    }
+
     // Cell click handler
     sheetBody.addEventListener('click', (e) => {
+      // If clicked the quick copy button
+      const copyBtn = e.target.closest('.cell-copy-btn');
+      if (copyBtn) {
+        e.stopPropagation();
+        const textToCopy = copyBtn.getAttribute('data-copy');
+        copyText(textToCopy, textToCopy);
+        return;
+      }
+
       const cell = e.target.closest('td.sheet-cell');
       if (!cell) return;
 
@@ -1184,6 +1354,53 @@
       selectedCell = { r, c, coord, val };
       cellCoordsEl.textContent = coord;
       formulaInput.value = val;
+    });
+
+    // Double-click to copy cell value
+    sheetBody.addEventListener('dblclick', (e) => {
+      const cell = e.target.closest('td.sheet-cell');
+      if (!cell) return;
+      const val = cell.getAttribute('data-val');
+      copyText(val, val);
+    });
+
+    // Copy Cell Button in Formula bar
+    document.getElementById('copyCellBtn').addEventListener('click', () => {
+      if (selectedCell && selectedCell.val) {
+        copyText(selectedCell.val, selectedCell.val);
+      } else {
+        showCopyToast('Sélectionnez d\'abord une cellule à copier !');
+      }
+    });
+
+    // Copy Full Row Button in Formula bar
+    document.getElementById('copyRowBtn').addEventListener('click', () => {
+      if (selectedCell && selectedCell.r) {
+        const rowIdx = selectedCell.r - 1;
+        if (rowIdx >= 0 && rowIdx < filteredIndices.length) {
+          const rowData = rawData[filteredIndices[rowIdx]];
+          const rowText = rowData.join('\t');
+          copyText(rowText, `${rowData[0]} - ${rowData[4]}`);
+        }
+      } else {
+        showCopyToast('Sélectionnez d\'abord une ligne à copier !');
+      }
+    });
+
+    // Keyboard shortcut Ctrl+C
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        const selectedText = window.getSelection().toString();
+        // If user already highlighted some text with mouse, let default copy happen
+        if (selectedText && selectedText.trim().length > 0) {
+          showCopyToast(`Copié : "${selectedText.trim().slice(0, 30)}"`);
+          return;
+        }
+        // If a cell is selected, copy it
+        if (selectedCell && selectedCell.val && document.activeElement !== globalSearchInput) {
+          copyText(selectedCell.val, selectedCell.val);
+        }
+      }
     });
 
     // Global Search events
